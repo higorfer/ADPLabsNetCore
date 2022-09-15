@@ -14,6 +14,7 @@ namespace ADPLabsNetCore.Services
 
         public ExternalADPServices(IADPCalcService aDPCalcService, IConfiguration iConfig)
         {
+            //Dependency injection in order to use appsettings.json
             _configuration = iConfig;
             string protocol = _configuration.GetValue<string>("ADP:Protocol");
             string baseUrl = _configuration.GetValue<string>("ADP:BaseUrl");
@@ -26,28 +27,24 @@ namespace ADPLabsNetCore.Services
             string urlGetTask = _url + _configuration.GetValue<string>("ADP:GetTask");
             var adpTask = new ADPTask();
 
-            try
-            {
-
             using (var httpClient = new HttpClient())
             {
-
+                
+                //Perform GetAsync request
                 using (var response = await httpClient.GetAsync(urlGetTask))
                 {
                     string apiResponse = await response.Content.ReadAsStringAsync();
+
+                    //Adding options for enum conversion
                     var options = new JsonSerializerOptions();
                     options.Converters.Add(new JsonStringEnumConverter());
+
                     adpTask = JsonSerializer.Deserialize<ADPTask>(apiResponse, options);
                 }
             }
 
             return adpTask;
 
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.ServiceUnavailable)
-            {
-                throw ex;
-            }
         }
 
         public async Task<HttpStatusCode> SubmitAdpTask(CalcBody calcBody)
@@ -55,12 +52,13 @@ namespace ADPLabsNetCore.Services
 
             string urlSubmitTask = _url + _configuration.GetValue<string>("ADP:SubmitTask");
 
+            //creating body
             var requestData = JsonSerializer.Serialize(calcBody);
             var body = new StringContent(requestData, Encoding.UTF8, "application/json");
 
             using (var httpClient = new HttpClient())
             {
-
+                //Perform postAsync request
                 using (var response = await httpClient.PostAsync(urlSubmitTask, body))
                 {
                     return response.StatusCode;

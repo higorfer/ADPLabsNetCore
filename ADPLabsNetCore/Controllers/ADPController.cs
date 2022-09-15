@@ -22,7 +22,9 @@ namespace ADPLabsNetCore.Controllers
             _aDPCalcService = aDPCalcService;
         }
 
-
+        /// <summary>
+        /// Retrieves an ADP task
+        /// </summary>
         [HttpGet("/GetAdpTask")]
         [ProducesResponseType(typeof(ADPTask), 200)] 
         public async Task<ActionResult<ADPTask>> GetAdpTask()
@@ -31,11 +33,14 @@ namespace ADPLabsNetCore.Controllers
             return Ok(task);
         }
 
+        /// <summary>
+        /// Get and Process an ADP task
+        /// </summary>
         [HttpGet("/ProcessTask")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(503)]
         public async Task<IActionResult> ProcessTaskAsync()
         {
             var adpTask = await _externalADPServices.GetAdpTask();
