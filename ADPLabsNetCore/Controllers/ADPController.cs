@@ -1,7 +1,9 @@
 ﻿using ADPLabsNetCore.Models;
+using ADPLabsNetCore.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Configuration;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,36 +13,35 @@ namespace ADPLabsNetCore.Controllers
     [Route("[controller]")]
     public class ADPController : Controller
     {
-        private IConfiguration configuration;
-        private readonly string url;
-        public ADPController(IConfiguration iConfig)
+        private readonly IExternalADPServices _externalADPServices;
+        private readonly IADPCalcService _aDPCalcService;
+        public ADPController(IExternalADPServices externalADPServices, IADPCalcService aDPCalcService)
         {
-            configuration = iConfig;
-            string protocol = configuration.GetValue<string>("ADP:Protocol");
-            string baseUrl = configuration.GetValue<string>("ADP:BaseUrl");
-            url = protocol + baseUrl;
+            _externalADPServices = externalADPServices;
+            _aDPCalcService = aDPCalcService;
         }
 
 
-        [HttpGet]
+        [HttpGet("/GetAdpTask")]
         [ProducesResponseType(typeof(ADPTask), 200)] 
-        public async Task<IActionResult> GetAdpTask()
+        public async Task<ActionResult<ADPTask>> GetAdpTask()
         {
+            var task = await _externalADPServices.GetAdpTask();
+            return Ok(task);
+        }
 
-            string urlGetTask = url + configuration.GetValue<string>("ADP:GetTask");
+        [HttpGet("/ProcessTask")]
+        [ProducesResponseType(typeof(ADPTask), 200)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+        public async Task<IActionResult> ProcessTaskAsync()
+        {
+            var adpTask = await _externalADPServices.GetAdpTask();
+            var taskToPost = _aDPCalcService.Calculate(adpTask);
 
-            var adpTask = new ADPTask();
-            using (var httpClient = new HttpClient())
-            {
-                using (var response = await httpClient.GetAsync(urlGetTask))
-                {
-                    string apiResponse = await response.Content.ReadAsStringAsync();
-                    var options = new JsonSerializerOptions();
-                    options.Converters.Add(new JsonStringEnumConverter());
-                    adpTask = JsonSerializer.Deserialize<ADPTask>(apiResponse, options);
-                }
-            }
-            return Ok(adpTask);
+            return Ok(taskToPost);
+
         }
     }
 }
