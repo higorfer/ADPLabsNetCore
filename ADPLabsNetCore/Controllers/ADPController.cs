@@ -3,6 +3,7 @@ using ADPLabsNetCore.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System.Configuration;
+using System.Net;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -31,7 +32,7 @@ namespace ADPLabsNetCore.Controllers
         }
 
         [HttpGet("/ProcessTask")]
-        [ProducesResponseType(typeof(ADPTask), 200)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
@@ -39,8 +40,21 @@ namespace ADPLabsNetCore.Controllers
         {
             var adpTask = await _externalADPServices.GetAdpTask();
             var taskToPost = _aDPCalcService.Calculate(adpTask);
+            var submitedTask = await _externalADPServices.SubmitAdpTask(taskToPost);
 
-            return Ok(taskToPost);
+            switch (submitedTask)
+            {
+                case HttpStatusCode.OK:
+                    return Ok("Success");
+                case HttpStatusCode.BadRequest:
+                    return BadRequest("Incorrect value in result; No ID specified; Value is invalid");
+                case HttpStatusCode.NotFound:
+                    return NotFound("Value not found for specified ID");
+                case HttpStatusCode.ServiceUnavailable:
+                    return StatusCode(503, "Error communicating with database");
+            }
+
+            return Problem("Internal Server Error");
 
         }
     }
