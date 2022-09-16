@@ -20,14 +20,11 @@ while (true)
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
     HttpResponseMessage response = await client.GetAsync("/ProcessTask");
-    response.EnsureSuccessStatusCode();
+    //response.EnsureSuccessStatusCode();
 
-    if (response.IsSuccessStatusCode)
-    {
-        //var task = await response.Content.ReadFromJsonAsync<TaskTable>(); //should but does not work
-        var task = await response.Content.ReadAsStringAsync();
-        Console.WriteLine(task);
-    }
+    //var task = await response.Content.ReadFromJsonAsync<TaskTable>(); //should but does not work
+    var task = await response.Content.ReadAsStringAsync();
+    Console.WriteLine(task);
 
     Thread.Sleep(1000 * 60 * 1); // Sleep for a minute
 }

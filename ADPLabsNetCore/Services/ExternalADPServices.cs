@@ -66,10 +66,11 @@ namespace ADPLabsNetCore.Services
                 //Perform postAsync request
                 using (var response = await httpClient.PostAsync(urlSubmitTask, body))
                 {
-                    _ADPRepository.UpdateTask(taskId: calcBody.id,
-                                              result: calcBody.result,
-                                              message: MessagesTask.submited,
-                                              status: (int?)response.StatusCode);
+                    _ = _ADPRepository.UpdateTask(
+                        taskId: calcBody.id,
+                        result: calcBody.result,
+                        message: MessagesTask.submited,
+                        status: (int?)response.StatusCode);
 
                     var taskTable = await _ADPRepository.GetTask(calcBody.id);
                     return taskTable;
