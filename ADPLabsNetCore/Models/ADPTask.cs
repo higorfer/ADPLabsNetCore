@@ -18,4 +18,11 @@ namespace ADPLabsNetCore.Models
         division,
         remainder
     }
+
+    internal static class MessagesTask
+    {
+        public const string created = "created";
+        public const string calculated = "calculated";
+        public const string submited = "submited";
+    }
 }

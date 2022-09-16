@@ -1,9 +1,19 @@
 ﻿using ADPLabsNetCore.Models;
+using ADPLabsNetCore.Repositories;
+using System.Net;
 
 namespace ADPLabsNetCore.Services
 {
     public class ADPCalcService : IADPCalcService
     {
+
+        private readonly IADPRepository _ADPRepository;
+
+        public ADPCalcService(IADPRepository aDPRepository)
+        {
+            _ADPRepository = aDPRepository;
+        }
+
         public double AdditionTask(double left, double right) { return left + right; }
         public double SubtractionTask(double left, double right) { return left - right; }
         public double MultiplicationTask(double left, double right) { return left * right; }
@@ -34,6 +44,7 @@ namespace ADPLabsNetCore.Services
                     break;
             }
 
+            _ADPRepository.UpdateTask(adpTask.id, taskToPost.result, MessagesTask.calculated, (int?)HttpStatusCode.OK);
             return taskToPost;
         }
     }

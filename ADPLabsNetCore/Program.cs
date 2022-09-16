@@ -1,4 +1,8 @@
+using ADPLabsNetCore.Db;
+using ADPLabsNetCore.Repositories;
 using ADPLabsNetCore.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Reflection;
 using System.Text.Json.Serialization;
 
@@ -20,6 +24,9 @@ builder.Services.AddSwaggerGen(c =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath); //in order to show summaries on swagger
 });
+builder.Services.AddDbContext<ADPContext>(options =>
+                options.UseInMemoryDatabase(databaseName: "ADPDb"));
+builder.Services.AddScoped<IADPRepository, ADPRepository>();
 builder.Services.AddScoped<IExternalADPServices, ExternalADPServices>();
 builder.Services.AddScoped<IADPCalcService, ADPCalcService>();
 

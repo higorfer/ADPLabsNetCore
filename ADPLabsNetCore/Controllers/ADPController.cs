@@ -7,6 +7,7 @@ using System.Net;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Xml;
 
 namespace ADPLabsNetCore.Controllers
 {
@@ -41,26 +42,24 @@ namespace ADPLabsNetCore.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(503)]
-        public async Task<IActionResult> ProcessTaskAsync()
+        [Produces("application/json")]
+        public async Task<ActionResult<TaskTable>> ProcessTaskAsync()
         {
+            //get current task
             var adpTask = await _externalADPServices.GetAdpTask();
+            //calculate the current task
             var taskToPost = _aDPCalcService.Calculate(adpTask);
+            //submit the results
             var submitedTask = await _externalADPServices.SubmitAdpTask(taskToPost);
 
-            switch (submitedTask)
+            return (HttpStatusCode)submitedTask.lastStatus switch
             {
-                case HttpStatusCode.OK:
-                    return Ok("Success");
-                case HttpStatusCode.BadRequest:
-                    return BadRequest("Incorrect value in result; No ID specified; Value is invalid");
-                case HttpStatusCode.NotFound:
-                    return NotFound("Value not found for specified ID");
-                case HttpStatusCode.ServiceUnavailable:
-                    return StatusCode(503, "Error communicating with database");
-            }
-
-            return Problem("Internal Server Error");
-
+                HttpStatusCode.OK => Ok("Success: " + JsonSerializer.Serialize(submitedTask)), //json and options added due to pretty print into the console app
+                HttpStatusCode.BadRequest => BadRequest("Incorrect value in result; No ID specified; Value is invalid"),
+                HttpStatusCode.NotFound => NotFound("Value not found for specified ID"),
+                HttpStatusCode.ServiceUnavailable => StatusCode(503, "Error communicating with database"),
+                _ => Problem("Internal Server Error"),
+            };
         }
     }
 }

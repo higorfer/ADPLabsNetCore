@@ -6,6 +6,6 @@ namespace ADPLabsNetCore.Services
     public interface IExternalADPServices
     {
         Task<ADPTask> GetAdpTask();
-        Task<HttpStatusCode> SubmitAdpTask(CalcBody calcBody);
+        Task<TaskTable> SubmitAdpTask(CalcBody calcBody);
     }
 }

@@ -4,21 +4,25 @@ using System.Text.Json;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using ADPLabsNetCore.Repositories;
+using System.Threading.Tasks;
 
 namespace ADPLabsNetCore.Services
 {
     public class ExternalADPServices : IExternalADPServices
     {
-        private readonly IConfiguration _configuration;
         private readonly string _url;
+        private readonly IConfiguration _configuration;
+        private readonly IADPRepository _ADPRepository;
 
-        public ExternalADPServices(IADPCalcService aDPCalcService, IConfiguration iConfig)
+        public ExternalADPServices(IConfiguration iConfig, IADPRepository aDPRepository)
         {
             //Dependency injection in order to use appsettings.json
             _configuration = iConfig;
             string protocol = _configuration.GetValue<string>("ADP:Protocol");
             string baseUrl = _configuration.GetValue<string>("ADP:BaseUrl");
             _url = protocol + baseUrl;
+            _ADPRepository = aDPRepository;
         }
 
         public async Task<ADPTask> GetAdpTask()
@@ -43,11 +47,12 @@ namespace ADPLabsNetCore.Services
                 }
             }
 
+            await _ADPRepository.SaveTask(adpTask);
             return adpTask;
 
         }
 
-        public async Task<HttpStatusCode> SubmitAdpTask(CalcBody calcBody)
+        public async Task<TaskTable> SubmitAdpTask(CalcBody calcBody)
         {
 
             string urlSubmitTask = _url + _configuration.GetValue<string>("ADP:SubmitTask");
@@ -61,7 +66,13 @@ namespace ADPLabsNetCore.Services
                 //Perform postAsync request
                 using (var response = await httpClient.PostAsync(urlSubmitTask, body))
                 {
-                    return response.StatusCode;
+                    _ADPRepository.UpdateTask(taskId: calcBody.id,
+                                              result: calcBody.result,
+                                              message: MessagesTask.submited,
+                                              status: (int?)response.StatusCode);
+
+                    var taskTable = await _ADPRepository.GetTask(calcBody.id);
+                    return taskTable;
                 }
             }
         }
